@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h1>Song Information</h1>
+    <div>
+        {% for table in tables %}
+            <h2>{{ titles[loop.index0] }}</h2>
+            {{ table | safe }}
+        {% endfor %}
+    </div>
+    <a href="{{ url_for('analyze', playlist_id=playlist_id) }}">Back to Analysis</a>
+{% endblock %}

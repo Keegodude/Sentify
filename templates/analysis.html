@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <a href="/playlists" class="button">Return to playlists</a>
+
+    <h1>'{{ playlist_name }}' Analysis Results</h1>
+
+    <h2>Attributes:</h2>
+        <ul>
+            <li>polarity: lyrics' polarity. From -1.0 to 1.0 greater values represent positivity</li>
+            <li>word sentiments: provide 5 most positive words and 5 least positive words from lyrics</li>
+            <li>danceability: describes how suitable track is for dancing(based on tempo, rhythm stability, beat strength, and overall regularity</li>
+            <li>energy: measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy</li>
+            <li>valence: measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track</li>
+            <li>tempo: estimated tempo of track in beats per minute, i.e. the speed of the track</li>
+            <li>acousticness: confidence measure from 0.0 to 1.0 of whether the track is acoustic</li>
+            <li>instrumentalness: float that predicts whether a song is completely instrumental or not</li>
+            <li>loudness: average loudness in decibels for the overall track</li>
+            <li>speechiness: detects presence of spoken words in track</li>
+            <li>polence: ensemble metric representing overall tone of the song incorporating lyrical content and musical feel.</li>
+        </ul>
+
+
+
+    <h2>Inter-playlist polence Distribution</h2>
+    <img src="data:image/png;base64,{{ interpolence_distribution }}" alt="Interpolence Distribution">
+    <h1>This playlist's average polence: {{ playlist_avg_polence }}</h1>
+    <p>Database mean: {{ polences_mean }}</p>
+    <p>Database median: {{ polences_median }}</p>
+
+    <h2>PCA cluster plot</h2>
+    <img src="data:image/png;base64,{{ pca_plot }}" alt="PCA cluster plot">
+
+
+    <h2>Correlation Heatmap</h2>
+    <img src="data:image/png;base64,{{ heatmap }}" alt="Correlation Heatmap">
+
+    <h2>Polence Distribution</h2>
+    <img src="data:image/png;base64,{{ polence_distribution }}" alt="Polence Distribution">
+
+
+
+    <h2>Descriptive Statistics</h2>
+    {{ tables[1]|safe }}
+
+    <h2>Valence Distribution</h2>
+    <img src="data:image/png;base64,{{ valence_distribution }}" alt="Valence Distribution">\
+
+    <h2>Polarity Distribution</h2>
+    <img src="data:image/png;base64,{{ polarity_distribution }}" alt="Polarity Distribution">
+
+    <button type="button" class="collapsible">View/Hide Individual Song Information</button>
+    <div class="content">
+        <h2>Tracks(sorted by descending polence)</h2>
+        {{ tables[0] | safe }}
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var coll = document.getElementsByClassName("collapsible");
+            for (var i = 0; i < coll.length; i++) {
+                coll[i].addEventListener("click", function() {
+                    this.classList.toggle("active");
+                    var content = this.nextElementSibling;
+                    if (content.style.display === "block") {
+                        content.style.display = "none";
+                    } else {
+                        content.style.display = "block";
+                    }
+                });
+            }
+        });
+    </script>
+
+    <h2>Download Data</h2>
+    <a href="{{ url_for('download_csv', playlist_id=playlist_id) }}" class="btn btn-primary">Download CSV</a>
+
+    <!-- TODO: generate polarity score for entire playlist, store playlist and score in database, compare database to others, create a new metric that utilizes both valence(feel of the song) and polarity(feel of the lyrics) -->
+{% endblock %}

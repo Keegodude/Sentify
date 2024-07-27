@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h1>Select a Playlist to Analyze</h1>
+    <ul>
+        {% for playlist in playlists %}
+        <li>
+            <a href="{{ url_for('analyze', playlist_id=playlist['id']) }}">{{ playlist['name'] }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
