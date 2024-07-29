@@ -1,0 +1,7 @@
+REQUIRED PYTHON LIBRARIES
+Flask
+spotipy
+lyricsgenius
+textblob
+flask_sqlalchemy
+Scikit-learn
