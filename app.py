@@ -204,64 +204,13 @@ def generate_pca_plot(df, optimal_k=3):
     plt.xlabel(f'pc1 ({pca.explained_variance_ratio_[0] * 100:.2f}% variance)')
     plt.ylabel(f'pc2 ({pca.explained_variance_ratio_[1] * 100:.2f}% variance)')
 
-    # Save plot to a bytes buffer
+    # Save plot
     buf = io.BytesIO()
     pca_plot.figure.savefig(buf, format='png')
     buf.seek(0)
     image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
     buf.close()
     return image_base64
-
-
-def generate_bokeh_pca(df, optimal_k=3):
-    # Assuming df is your DataFrame and optimal_k is the number of clusters
-    features = ['danceability', 'energy', 'valence', 'tempo', 'acousticness',
-                'instrumentalness', 'loudness', 'speechiness', 'polarity', 'polence']
-
-    # Drop rows with missing values in the features
-    df_clean = df.dropna(subset=features)
-
-    # Standardize the features
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(df_clean[features])
-
-    # Fit K-means
-    kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-    kmeans.fit(X_scaled)
-    df_clean['cluster'] = kmeans.labels_
-
-    # Reduce dimensionality using PCA
-    pca = PCA(n_components=2)
-    X_pca = pca.fit_transform(X_scaled)
-
-    # Create a DataFrame with the PCA results
-    df_clean['pc1'] = X_pca[:, 0]
-    df_clean['pc2'] = X_pca[:, 1]
-
-    # Create a new plot
-    p = figure(title='Cluster Visualization using PCA')
-
-    # Add a circle renderer with vectorized colors and sizes
-    source = ColumnDataSource(data=dict(
-        x=df_clean['pc1'],
-        y=df_clean['pc2'],
-        color=df_clean['cluster'],
-        song_name=df_clean['name'],
-    ))
-
-    p.circle('x', 'y', color='color', source=source)
-
-    # Add a hover tool referring to the formatted columns
-    hover = HoverTool(tooltips=[
-        ("index", "$index"),
-        ("(PCA1,PCA2)", "(@x, @y)"),
-        ("song", "@song_name"),
-    ])
-
-    p.add_tools(hover)
-    output_file("templates/pca_plot.html")
-    # Show the result
-    save(p)
 
 
 @app.route('/analyze/<playlist_id>')
@@ -340,27 +289,10 @@ def analyze(playlist_id):
                            playlist_id=playlist_id)
 
 
-@app.route('/song_info/<playlist_id>')
-def song_info(playlist_id):
-    # Retrieve the song info from the session or database
-    if 'analysis_result' in session and playlist_id in session['analysis_result']:
-        df_tracks = pd.DataFrame(session['analysis_result'][playlist_id])
-    else:
-        # Fallback to fetching from database or re-analysis if needed
-        token_info = get_token()
-        if not token_info:
-            return redirect(url_for('login'))
-        sp = spotipy.Spotify(auth=token_info['access_token'])
-        df_tracks = get_playlist_tracks_audio_features(sp, playlist_id)
-
-    return render_template('song_info.html', tables=[df_tracks.to_html(classes='data')], titles=['Tracks'])
-
-
 @app.route('/download_csv/<playlist_id>')
 def download_csv(playlist_id):
     if 'analysis_result' in session and session['analysis_result'].get(playlist_id):
         df_tracks = pd.DataFrame(session['analysis_result'][playlist_id])
-        # Create a buffer to hold the CSV data
         buf = io.BytesIO()
         df_tracks.to_csv(buf, index=False)
         buf.seek(0)
@@ -450,7 +382,6 @@ def get_playlist_tracks_audio_features(sp, playlist_id):
 
 
 def not_english(text):
-    # Define a regex pattern for English characters and common symbols on a QWERTY keyboard
     pattern = re.compile(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]')
     return bool(pattern.match(text))
 
@@ -471,7 +402,6 @@ def get_lyrics(song_title, artist_name):
         song = genius.search_song(song_title, artist_name)
         if song:
             lyrics = song.lyrics
-            # Split the lyrics into lines, skip the first line, and join them back together
             lyrics_lines = lyrics.split('\n')
             cleaned_lyrics = '\n'.join(lyrics_lines[1:])
             # Remove all text within square brackets
